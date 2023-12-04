@@ -19,6 +19,16 @@ type GameSets map[int64][]Game
 
 type PossibleGames map[int64]bool
 
+func Max(array []int64) int64 {
+	max_ := array[0]
+	for _, value := range array {
+		if max_ < value {
+			max_ = value
+		}
+	}
+	return max_
+}
+
 func main() {
 	filename := os.Args[1]
 
@@ -97,8 +107,26 @@ func main() {
 	}
 
 	possibleGames := make(PossibleGames, 0)
+	fewestPerGame := make(map[int64]Game)
 
 	for gameID, sets := range gameSets {
+
+		reds := make([]int64, len(sets))
+		greens := make([]int64, len(sets))
+		blues := make([]int64, len(sets))
+
+		for _, game := range sets {
+			reds = append(reds, game.red)
+			greens = append(greens, game.green)
+			blues = append(blues, game.blue)
+		}
+
+		fewestPerGame[gameID] = Game{
+			red:   Max(reds),
+			green: Max(greens),
+			blue:  Max(blues),
+		}
+
 		for _, game := range sets {
 			if possible, ok := possibleGames[gameID]; ok && !possible {
 				break // game exists and is already marked as impossible
@@ -120,4 +148,10 @@ func main() {
 	}
 
 	fmt.Println("Sum: ", sum)
+
+	power := int64(0)
+	for _, g := range fewestPerGame {
+		power += g.red * g.green * g.blue
+	}
+	fmt.Println("power: ", power)
 }
