@@ -5,7 +5,39 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 )
+
+// constant lookup
+var digitSet map[rune]bool = map[rune]bool{
+	'1': true,
+	'2': true,
+	'3': true,
+	'4': true,
+	'5': true,
+	'6': true,
+	'7': true,
+	'8': true,
+	'9': true,
+}
+
+/*
+There are instances of overlapping numbers (e.g: twone that must be
+interpreted as 21, etc). Therefore, this maps the overlaps by linking
+numbers that start/ends with same letters. Then, replace the matches in
+an way that breaks the overlap.
+*/
+var overlappingNumbers map[string]string = map[string]string{
+	"one":   "o1e", // matches with eight
+	"two":   "t2o", // matches with one
+	"three": "t3e", // matches with eight
+	"four":  "4",
+	"five":  "5e", // matches with eight
+	"six":   "6",
+	"seven": "7n",  // matches with nine
+	"eight": "e8t", // matches with two, three
+	"nine":  "n9e", // matches with eight
+}
 
 func main() {
 	filename := os.Args[1]
@@ -13,6 +45,8 @@ func main() {
 	file, err := os.Open(filename)
 	if err != nil {
 		fmt.Println("expected to open file without errors. err:", err)
+		os.Exit(1)
+		return
 	}
 	defer file.Close()
 
@@ -20,27 +54,19 @@ func main() {
 	scanner := bufio.NewScanner(reader)
 	scanner.Split(bufio.ScanLines)
 
-	// constant lookup
-	numbersSet := map[rune]bool{
-		'1': true,
-		'2': true,
-		'3': true,
-		'4': true,
-		'5': true,
-		'6': true,
-		'7': true,
-		'8': true,
-		'9': true,
-		'0': true,
-	}
-
 	calibrationValues := make([]int64, 0)
 	for scanner.Scan() {
 		line := scanner.Text()
+
+		for number, digit := range overlappingNumbers {
+			if i := strings.Index(line, number); i >= 0 {
+				line = strings.ReplaceAll(line, number, digit)
+			}
+		}
 		queue := make([]rune, 0)
 
 		for _, char := range line {
-			if _, ok := numbersSet[char]; ok {
+			if _, ok := digitSet[char]; ok {
 				queue = append(queue, char)
 			}
 		}
