@@ -10,10 +10,14 @@ import (
 	"strings"
 )
 
-type Card map[int][]string
+type Card map[int]struct {
+	winners []string
+	count   int
+}
 
 func main() {
 	filename := os.Args[1]
+	// filename := "day4-example.txt"
 
 	file, err := os.Open(filename)
 	if err != nil {
@@ -61,15 +65,44 @@ func main() {
 			}
 		}
 
-		cards[int(cardNum)] = found
+		cards[int(cardNum)] = struct {
+			winners []string
+			count   int
+		}{winners: found, count: 1}
 	}
 
 	points := 0
-	for _, nums := range cards {
-		n := len(nums)
+	/* we have to iterate via conventional loop instead of
+	map iteration because the order of indexing matters and
+	golang map doesn't keep order of keys.
+	*/
+	for i := 1; i < len(cards); i++ {
+		currentCard, ok := cards[i]
+		if !ok {
+			continue
+		}
+
+		n := len(currentCard.winners)
 		if n > 0 {
 			points += int(math.Pow(2, float64(n-1)))
 		}
+
+		for j := i + 1; j <= i+n; j++ {
+			nextCard, ok := cards[j]
+			if ok {
+				cards[j] = struct {
+					winners []string
+					count   int
+				}{winners: nextCard.winners, count: nextCard.count + currentCard.count}
+			}
+		}
+
 	}
 	fmt.Printf("Sum: %d\n", points)
+
+	total := 0
+	for _, e := range cards {
+		total += e.count
+	}
+	fmt.Printf("total: %d\n", total)
 }
